@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safe Scam Simulator — Training Only</title>
+<style>
+  :root {
+    --navy: #1E2A4A;
+    --navy-light: #2B3D66;
+    --sage-bg: #EEF2ED;
+    --gold: #C9971F;
+    --alert-red: #B23A2E;
+    --safe-green: #2E6B4F;
+    --ink: #1A1A1A;
+    --paper: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Verdana, Arial, sans-serif;
+    background: var(--sage-bg);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 12px 60px;
+    min-height: 100vh;
+  }
+  .banner {
+    background: var(--navy);
+    color: white;
+    width: 100%;
+    max-width: 460px;
+    text-align: center;
+    padding: 14px 10px;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin-bottom: 18px;
+    border: 3px solid var(--gold);
+  }
+  .banner span { color: var(--gold); }
+
+  .phone {
+    width: 340px;
+    max-width: 92vw;
+    background: var(--paper);
+    border-radius: 34px;
+    border: 10px solid var(--navy);
+    box-shadow: 0 18px 40px rgba(30,42,74,0.25);
+    overflow: hidden;
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    background: var(--navy);
+    height: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+  }
+  .notch::after {
+    content: "";
+    width: 70px;
+    height: 8px;
+    background: #000;
+    border-radius: 8px;
+    margin-bottom: 4px;
+  }
+  .screen {
+    flex: 1;
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  h1.step-title {
+    font-size: 21px;
+    margin: 0 0 4px;
+    color: var(--navy);
+  }
+  p.step-sub {
+    margin: 0;
+    font-size: 15px;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  .msg-bubble {
+    background: #F1F1F1;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 17px;
+    line-height: 1.5;
+    border-left: 6px solid var(--gold);
+  }
+  .msg-sender {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .link-text {
+    color: #1a5fb4;
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .fake-site {
+    background: linear-gradient(180deg, #FFF7E0, #FFFFFF);
+    border: 2px dashed var(--gold);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+  }
+  .fake-site h2 {
+    color: var(--alert-red);
+    font-size: 22px;
+    margin: 4px 0 10px;
+  }
+  .fake-site p { font-size: 15px; color: #444; margin: 4px 0 14px; }
+  .fake-input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1.5px solid #ccc;
+    margin-bottom: 10px;
+  }
+
+  button.action {
+    font-size: 17px;
+    font-weight: 700;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+  .btn-danger { background: var(--gold); color: #2B2000; }
+  .btn-safe { background: var(--navy); color: white; }
+  .btn-reveal { background: var(--alert-red); color: white; }
+  button.action:active { transform: scale(0.98); }
+
+  .reveal-box {
+    background: #FFF3F1;
+    border: 2px solid var(--alert-red);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .reveal-box h2 {
+    color: var(--alert-red);
+    font-size: 20px;
+    margin: 0 0 10px;
+  }
+  .flag {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 15px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .flag-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .progress {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #D9D9D9;
+  }
+  .dot.active { background: var(--navy); }
+
+  .restart {
+    margin-top: 18px;
+    background: var(--safe-green);
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">🛡️ TRAINING MODE — <span>Nothing here is real.</span><br>No real messages, no real bank, no real data.</div>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen" id="screen"></div>
+</div>
+
+<script>
+const screen = document.getElementById('screen');
+let step = 0;
+
+const steps = [
+  render_intro,
+  render_message,
+  render_fakesite,
+  render_reveal
+];
+
+function progressDots(current, total) {
+  let dots = '<div class="progress">';
+  for (let i = 0; i < total; i++) {
+    dots += `<div class="dot ${i === current ? 'active' : ''}"></div>`;
+  }
+  dots += '</div>';
+  return dots;
+}
+
+function render_intro() {
+  screen.innerHTML = `
+    <h1 class="step-title">Let's see a scam message</h1>
+    <p class="step-sub">In a moment you'll see a message like the ones real scammers send. Watch what happens when someone clicks it — nothing you see is connected to any real bank or account.</p>
+    <div style="flex:1"></div>
+    <button class="action btn-safe" onclick="goTo(1)">Start ▸</button>
+    ${progressDots(0,4)}
+  `;
+}
+
+function render_message() {
+  screen.innerHTML = `
+    <h1 class="step-title">📩 New Message</h1>
+    <div class="msg-bubble">
+      <div class="msg-sender">SBI-ALERT (unknown number)</div>
+      Dear Customer, your account is SELECTED for a ₹50,000 cash prize!
+      Click <span class="link-text" onclick="goTo(2)">bit.ly/sbi-claim-prize</span>
+      within 30 minutes or the offer will EXPIRE.
+    </div>
+    <p class="step-sub">👉 Tap the blue link above, just like a real person might.</p>
+    <div style="flex:1"></div>
+    ${progressDots(1,4)}
+  `;
+}
+
+function render_fakesite() {
+  screen.innerHTML = `
+    <div class="fake-site">
+      <h2>🎉 CLAIM YOUR ₹50,000!</h2>
+      <p>Enter your details below to receive your prize instantly.</p>
+      <input class="fake-input" placeholder="Full Name" disabled>
+      <input class="fake-input" placeholder="Bank Account Number" disabled>
+      <input class="fake-input" placeholder="OTP sent to your phone" disabled>
+      <button class="action btn-danger" onclick="goTo(3)">Submit &amp; Claim Prize</button>
+    </div>
+    <p class="step-sub">This is exactly the kind of page a scam link opens. The boxes are locked here so nothing can be typed — but on a real scam site, this is where people lose their money.</p>
+    ${progressDots(2,4)}
+  `;
+}
+
+function render_reveal() {
+  screen.innerHTML = `
+    <div class="reveal-box">
+      <h2>🛑 STOP — here's what just happened</h2>
+      <div class="flag"><span class="flag-icon">⏱️</span><span><b>Fake urgency:</b> "30 minutes or it expires" — scammers rush you so you don't stop to think.</span></div>
+      <div class="flag"><span class="flag-icon">📵</span><span><b>Unknown number:</b> Real banks message from verified, saved contact names — not random numbers.</span></div>
+      <div class="flag"><span class="flag-icon">🎁</span><span><b>A prize you never entered:</b> You can't win a contest you never joined.</span></div>
+      <div class="flag"><span class="flag-icon">🔑</span><span><b>Asking for OTP:</b> No real bank, company, or government office will ever ask for your OTP or PIN.</span></div>
+    </div>
+    <p class="step-sub" style="font-weight:700; color:var(--navy);">✅ The safe move: don't click. Call your bank directly using the number on your card, not the message.</p>
+    <button class="action restart" onclick="goTo(0)">↺ Watch it again</button>
+    ${progressDots(3,4)}
+  `;
+}
+
+function goTo(n) {
+  step = n;
+  steps[step]();
+}
+
+goTo(0);
+</script>
+
+</body>
+</html>
